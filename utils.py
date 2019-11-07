@@ -58,21 +58,14 @@ def getHTML(url, verb=False):
     from bs4.dammit import EncodingDetector
 
     try:
-        re = session.get(url, headers=headers, timeout=(10, 30))
+        req = session.get(url, headers=headers, timeout=(10, 30))
 
     except:
         return(None)
 
     else:
-        # dealing with encoding
-        http_encoding = re.encoding if 'charset' in re.headers.get('content-type', '').lower() else None
-        html_encoding = EncodingDetector.find_declared_encoding(re.content, is_html=True)
-        encoding = html_encoding or http_encoding
-
-        if 'text/html' in re.headers.get('content-type'):
-        # generating BeautifulSoup object
-            bsObj = BeautifulSoup(re.content, 'html5lib', from_encoding=encoding)
-            return(bsObj)
+        if 'text/html' in req.headers.get('content-type'):
+            return(req)
         else:
             return(None)
 
@@ -104,20 +97,23 @@ class InternalTextsScraper(object):
         self.LinksOut.write('url\thref\turl\n')
         scrapped_links = {}
         count = 1
+        import difflib
         for url in self.URLs:
             try:
-                re = session.get(url, headers=headers, timeout=(10, 30))
-                domain = re.url.split('/')
+                req = getHTML(url)
+
+                domain = req.url.split('/')
+                #print(domain)
                 if len(domain) > 3:
                     domain = '/'.join(domain[:-1])
                 else:
                     domain = '/'.join(domain)
-                #print('Analysing URL %s: %s'%(count, domain))
+                print('Analysing URL %s: %s'%(count, domain))
                 links = set()
                 links.add(url)
                 links = self.crawlWithDepth(urls = links, domain = domain)
                 scrapped_links[url] = links
-                print(links)
+                #print(links)
                 count += 1
             except:
                 continue
@@ -150,8 +146,14 @@ class InternalTextsScraper(object):
         total_urls = urls
 
         for link in urls:
-            #print(link)
-            bsObj = getHTML(link)
+            ##----------------------------------------------------------------------------
+            ##                  HTML DE FACTO RETRIEVAL for depths n-1
+            ##                    TODO: 
+            #                           extract text right here
+            ##----------------------------------------------------------------------------
+            # dealing with encoding
+        
+            bsObj = BeautifulSoup(getHTML(link).content, 'html5lib')
 
             total_urls= total_urls.union(self.getAllLinks(link, bsObj, domain))
 
@@ -159,6 +161,12 @@ class InternalTextsScraper(object):
 
 
     def getAllLinks(self, URL, bsObj, domain):
+        ##---------------------------------------------------------------------------------
+        ##                  EXPLORATION for LINKS IS DONE HERE
+        ##    TODO: 
+        #           extract text of valid links when depth n had been reached
+        ##---------------------------------------------------------------------------------
+
         links = set()
 
         if bsObj == None:
@@ -177,7 +185,7 @@ class InternalTextsScraper(object):
                     #        if 'github.com' in url or 'sourceforge.net' in url:
                                 #print('+1')
                     toWrite = '%s\t%s\n'%(domain, url)
-                    self.LinksOut.write(toWrite)
+                    #self.LinksOut.write(toWrite)
 
                     if domain in url: #if link is internal, we add it
                         #print("domain: " + domain)
@@ -194,9 +202,14 @@ class InternalTextsScraper(object):
         Githubs = {}
         for url in self.URLsDict.keys():
             foundGithubs = []
-            if getHTML(url) != None :
-                bObj = getHTML(url)
-                links = [li.attrs ["href"] for li in bObj.findAll("a") if 'href' in li.attrs]
+
+            #### getHTML!!!!
+
+
+            if getHTML(url) != None : 
+
+                bsObj = BeautifulSoup(getHTML(url).content, 'html5lib')
+                links = [li.attrs ["href"] for li in bsObj.findAll("a") if 'href' in li.attrs]
                 for link in links:
                     if self.isValidLink(link)== True and 'github' in link and link != url:
                         foundGithubs.append(link)
@@ -243,7 +256,7 @@ class InternalTextsScraper(object):
                 #print(inter_link)
                 text = self.html2text(inter_link, filename)
                 # for each master url, this dict stores the md text of the children
-                inter_texts[inter_link] = text 
+                inter_texts[inter_link] = text
 
                 end = time.clock()
                 elapse = end - start
@@ -262,17 +275,17 @@ class InternalTextsScraper(object):
     def html2text(self, url, filename):
         #print('URL: ' + url)
         try:
-            re = session.get(url, headers=headers, timeout=(10, 30))
+            req = session.get(url, headers=headers, timeout=(10, 30))
         except: # this handles all any connection error occurring
             print('Cannot connect to ' + url)
             return(None)
         else:
-            print(re.headers)
-            if 'Content-Type' in re.headers.keys() and 'text/html' in re.headers.get('Content-Type'):
+            #print(re.headers)
+            if 'Content-Type' in req.headers.keys() and 'text/html' in req.headers.get('Content-Type'):
                 h = html2text.HTML2Text()
                 h.ignore_images = True
                 h.ignore_links = True
-                t = re.text
+                t = req.text
                 text = h.handle(t)
                 text = text.replace("\n\n", "<m>")
                 text = text.replace("\n ", "<m>")
@@ -286,7 +299,7 @@ class InternalTextsScraper(object):
                     if par.lstrip() not in ['', ' ']:
                         if len(par.lstrip().split(" ")) > 3:
                             paragraphs = paragraphs + "\n" + par.lstrip()
-                
+
                 #print(paragraphs)
                 outParaFil.write(paragraphs)
                 return(paragraphs)
@@ -303,7 +316,10 @@ class InternalTextsScraper(object):
     def extractCit(self, url):
         doire = re.compile('\b(10[.][0-9]{4,}(?:[.][0-9]+)*/(?:(?!["&\'<>])\S)+)\b')
         if self.isValidLink(url) == True:
-            req = getHTML(url)
+
+            # HTML here!!!!!
+
+            req = BeautifulSoup(getHTML(url).content, 'html5lib')
             if req != None:
 
                 for link in req.findAll("a"):

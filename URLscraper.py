@@ -56,6 +56,7 @@ if __name__ == "__main__":
         #githubs = T.getGithubs()
 
         # Extract the text if option text=True
+        print("Link Extraction Finished ")
         if args.text == 'True':
             T.extractText(outname, urls)
     # Else, inform that the scraper was not even initialized
