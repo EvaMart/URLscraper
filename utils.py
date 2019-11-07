@@ -77,14 +77,18 @@ def getHTML(url, verb=False):
 
 class InternalTextsScraper(object):
 
-    def __init__(self, URLs, depth, LinksOut, TimeOut):
+    def __init__(self, URLs, urls, depth, LinksOut, TimeOut, outname):
         self.URLs = URLs
+        self.urls = urls
         self.depth = depth
         self.URLsDict = {}
         self.Texts = {}
         self.LinksOut =  LinksOut
         self.TimeOut = TimeOut
         self.oplinks = 'repos'
+        self.outname = outname
+
+        self.counter = 0
 
     # The links scraper
     def extractLinks(self):
@@ -111,7 +115,9 @@ class InternalTextsScraper(object):
                 print('Analysing URL %s: %s'%(count, domain))
                 links = set()
                 links.add(url)
-                links = self.crawlWithDepth(urls = links, domain = domain)
+                self.counter = 1
+                self.extractSingleText(url, url)
+                links = self.crawlWithDepth(urls = links, domain = domain, url =url)
                 scrapped_links[url] = links
                 #print(links)
                 count += 1
@@ -122,7 +128,7 @@ class InternalTextsScraper(object):
 
 
 
-    def crawlWithDepth(self, urls, domain):
+    def crawlWithDepth(self, urls, domain, url):
         '''
         This function returns a set of URLs 'urls' that result from their crawling with depth 'depth'.
         '''
@@ -130,7 +136,7 @@ class InternalTextsScraper(object):
         URLs = set(urls)
 
         while count < self.depth:
-            urls = self.single_crawl(urls, domain)
+            urls = self.single_crawl(urls, domain, url)
             for e in urls:
                 URLs.add(e)
             count += 1
@@ -139,7 +145,7 @@ class InternalTextsScraper(object):
 
 
 
-    def single_crawl(self, urls, domain):
+    def single_crawl(self, urls, domain, url):
         '''
         This function returns a set containing the links (urls) in a list of htmls (BeautifulSoup object)
         '''
@@ -154,13 +160,13 @@ class InternalTextsScraper(object):
             # dealing with encoding
         
             bsObj = BeautifulSoup(getHTML(link).content, 'html5lib')
-
-            total_urls= total_urls.union(self.getAllLinks(link, bsObj, domain))
+            
+            total_urls= total_urls.union(self.getAllLinks(link, bsObj, domain, url))
 
         return(total_urls)
 
 
-    def getAllLinks(self, URL, bsObj, domain):
+    def getAllLinks(self, URL, bsObj, domain, url):
         ##---------------------------------------------------------------------------------
         ##                  EXPLORATION for LINKS IS DONE HERE
         ##    TODO: 
@@ -178,19 +184,25 @@ class InternalTextsScraper(object):
 
                 if self.isValidLink(link.attrs['href'])== True: # if link is really an URL
 
-                    url = urljoin(URL, link.attrs['href']) # resolve URL
+                    cur_url = urljoin(URL, link.attrs['href']) # resolve URL
                     #print(domain)
                     #if self.oplinks == 'repos':
                     #    if 'github.com' not in URL and 'sourceforge.net' not in URL:
                     #        if 'github.com' in url or 'sourceforge.net' in url:
                                 #print('+1')
-                    toWrite = '%s\t%s\n'%(domain, url)
+                    toWrite = '%s\t%s\n'%(domain, cur_url)
                     #self.LinksOut.write(toWrite)
 
-                    if domain in url: #if link is internal, we add it
+                    if domain in cur_url: #if link is internal, we add it
                         #print("domain: " + domain)
                         #print("internal: " + url)
-                        links.add(url)
+                        if cur_url not in links:
+                            links.add(cur_url)
+                            self.counter += 1
+                            self.extractSingleText(url, cur_url)
+
+
+
                     else: # if the link is external, we skip it
                         #print("domain: " + domain)
                         #print("external: " + url)
@@ -270,7 +282,28 @@ class InternalTextsScraper(object):
             json.dump(self.Texts, fp, sort_keys=True, indent=4)
         '''
 
+    def extractSingleText(self, url,  inter_link):
+        '''
+        It writes the md of each url in a file
+        '''
+        start = time.clock()
+        filename = self.outname + "/" + self.urls[url] + "/" + self.urls[url] + "_url_" + str(self.counter) + ".md"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        #print(inter_link)
+        self.html2text(inter_link, filename)
+        # for each master url, this dict stores the md text of the children
 
+        end = time.clock()
+        elapse = end - start
+
+        self.TimeOut.write('%s\t%s\t%f\n'%(url, inter_link, elapse))
+
+
+
+        '''
+        with open(outname + '.json', 'w') as fp:
+            json.dump(self.Texts, fp, sort_keys=True, indent=4)
+        '''
 
     def html2text(self, url, filename):
         #print('URL: ' + url)

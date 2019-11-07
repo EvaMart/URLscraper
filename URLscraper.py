@@ -48,7 +48,7 @@ if __name__ == "__main__":
         LinksOut = open('Links'+ outname +'.txt', 'w')
         TimeOut = open('Time' + outname + '.txt','w' )
 
-        T = InternalTextsScraper(URLs = URLs, depth = depth, LinksOut=LinksOut, TimeOut=TimeOut)
+        T = InternalTextsScraper(URLs = URLs, urls = urls, depth = depth, LinksOut=LinksOut, TimeOut=TimeOut, outname = outname)
 
         # Scrap the internal links for the desired depth
         T.extractLinks()
@@ -57,8 +57,8 @@ if __name__ == "__main__":
 
         # Extract the text if option text=True
         print("Link Extraction Finished ")
-        if args.text == 'True':
-            T.extractText(outname, urls)
+        #if args.text == 'True':
+        #    T.extractText(outname, urls)
     # Else, inform that the scraper was not even initialized
     else:
         print('No URLs were provided, no scraping was performed')
