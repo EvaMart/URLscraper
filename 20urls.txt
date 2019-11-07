@@ -1,0 +1,20 @@
+http://www.popgen.dk/angsd	ANGSD
+http://cole-trapnell-lab.github.io/cufflinks/	cufflinks
+http://www.molgenis.org/wiki/ComputeStart	MOLGENIS compute
+http://sourceforge.net/projects/hmm-frame/	HMM-FRAME
+http://pydoit.org	doit
+http://its2.bioapps.biozentrum.uni-wuerzburg.de/	ITS2
+https://oi.gene.le.ac.uk	Osteogenesis imperfecta collagen mutation
+http://alan.cs.gsu.edu/NGS/?q=malta	MaLTA
+https://github.com/mzdb/pwiz-mzdb	raw2mzDB
+http://nucleix.mbu.iisc.ernet.in/prompredict/prompredict.html	PromPredict
+http://github.com/stajichlab/FGMP	FGMP
+https://binom.curie.fr/	BiNoM
+http://tarwi.lamolina.edu.pe/~fmendiburu	r-agricolae
+https://github.com/rmtheis/mummergpu/tree/master/mummergpu-2.0	MUMmerGPU
+http://emboss.open-bio.org/rel/rel6/apps/est2genome.html	est2genome
+http://immunet.cn/mimodb/	MimoDB
+https://github.com/dreamtools/dreamtools	DREAMTools
+http://wanglab.ucsd.edu/MIEC-SVM/	MIEC-SVM
+http://www.ebi.ac.uk/Tools/webservices/services/psa/emboss_water_rest	water_api (EBI)
+
