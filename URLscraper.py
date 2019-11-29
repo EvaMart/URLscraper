@@ -3,8 +3,8 @@ import argparse
 from utils import parseInput
 from utils import InternalTextsScraper
 
-
 def json2table(inputf, outputf):
+    import json
     jsonfile = open(inputf,'r')
     texts = json.load(jsonfile)
     outtable = open(outputf, 'w')
@@ -35,7 +35,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args() # access: args.depth, args.urls, arg.outname
 
-
     urls = args.urls
     URLs, urls = parseInput(urls)
     depth = args.depth
@@ -49,16 +48,12 @@ if __name__ == "__main__":
         TimeOut = open('Time' + outname + '.txt','w' )
 
         T = InternalTextsScraper(URLs = URLs, urls = urls, depth = depth, LinksOut=LinksOut, TimeOut=TimeOut, outname = outname)
-
         # Scrap the internal links for the desired depth
         T.extractLinks()
         #print(T.URLsDict)
-        #githubs = T.getGithubs()
 
-        # Extract the text if option text=True
-        print("Link Extraction Finished ")
-        #if args.text == 'True':
-        #    T.extractText(outname, urls)
-    # Else, inform that the scraper was not even initialized
+        print("Link and text Extraction Finished ")
+
     else:
+
         print('No URLs were provided, no scraping was performed')

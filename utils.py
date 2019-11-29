@@ -11,35 +11,33 @@ import os
 session = requests.Session()
 headers = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit 537.36 (KHTML, like Gecko) Chrome",
 "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}
-url = "https://www.whatismybrowser.com/developers/what-http-headers-is-my-browser-sending"
 
 def parseInput(InputPath):
     '''
-    This function takes the input file and builds a list of urls
+    This function takes the input file and builds a list of URLs
     required: the input path. Line format in input file: <url>\t<name>\n
     returns: a lis of urls in the file
     '''
     urls_file = open(InputPath, 'r')
     urls = {}
-    URLs = []
+    URLs = set()
     counter = 1
-    counter_valid = 0
     for line in urls_file:
         if len(line.split('\t')) != 2:
             print("Input file line %s skipped: impossible to parse, number of columns != 2."%(counter))
         else:
             url = line.split('\t')[0]
             name = line.split('\t')[1].split('\n')[0]
-            if "galaxy" not in url:
+            if url not in URLs:
                 urls[check_protocol(url)] = name
-                URLs.append(check_protocol(url))
-                counter_valid += 1
+                URLs.add(check_protocol(url))
         counter += 1
-    print("Number of URLs to be analyzed: %s"%(counter_valid))
+    print("Number of URLs to be analyzed: %s"%(len(URLs)))
     if urls == []:
         print("No URLs to analyze")
         return(None)
     else:
+        URLs = set(URLs)
         return(URLs, urls)
 
 
@@ -55,12 +53,17 @@ def check_protocol(url):
 
 
 def getHTML(url, verb=False):
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
     from bs4.dammit import EncodingDetector
+    import urllib
 
     try:
-        req = session.get(url, headers=headers, timeout=(10, 30))
+        req = session.get(url, headers=headers, timeout=(20, 50), verify=False)
+        #req = urllib.request.urlopen(url)
 
-    except:
+    except Exception as e:
+        print(e)
         return(None)
 
     else:
@@ -107,7 +110,7 @@ class InternalTextsScraper(object):
                 req = getHTML(url)
 
                 domain = req.url.split('/')
-                #print(domain)
+
                 if len(domain) > 3:
                     domain = '/'.join(domain[:-1])
                 else:
@@ -121,7 +124,10 @@ class InternalTextsScraper(object):
                 scrapped_links[url] = links
                 #print(links)
                 count += 1
-            except:
+            except Exception as e:
+                print('Failing: ' + '\t' + url)
+                print(e)
+            
                 continue
 
         self.URLsDict = scrapped_links
@@ -152,11 +158,6 @@ class InternalTextsScraper(object):
         total_urls = urls
 
         for link in urls:
-            ##----------------------------------------------------------------------------
-            ##                  HTML DE FACTO RETRIEVAL for depths n-1
-            ##                    TODO: 
-            #                           extract text right here
-            ##----------------------------------------------------------------------------
             # dealing with encoding
         
             bsObj = BeautifulSoup(getHTML(link).content, 'html5lib')
@@ -167,11 +168,6 @@ class InternalTextsScraper(object):
 
 
     def getAllLinks(self, URL, bsObj, domain, url):
-        ##---------------------------------------------------------------------------------
-        ##                  EXPLORATION for LINKS IS DONE HERE
-        ##    TODO: 
-        #           extract text of valid links when depth n had been reached
-        ##---------------------------------------------------------------------------------
 
         links = set()
 
@@ -185,49 +181,20 @@ class InternalTextsScraper(object):
                 if self.isValidLink(link.attrs['href'])== True: # if link is really an URL
 
                     cur_url = urljoin(URL, link.attrs['href']) # resolve URL
-                    #print(domain)
-                    #if self.oplinks == 'repos':
-                    #    if 'github.com' not in URL and 'sourceforge.net' not in URL:
-                    #        if 'github.com' in url or 'sourceforge.net' in url:
-                                #print('+1')
-                    toWrite = '%s\t%s\n'%(domain, cur_url)
-                    #self.LinksOut.write(toWrite)
 
                     if domain in cur_url: #if link is internal, we add it
-                        #print("domain: " + domain)
-                        #print("internal: " + url)
+
                         if cur_url not in links:
+
                             links.add(cur_url)
                             self.counter += 1
                             self.extractSingleText(url, cur_url)
-
-
 
                     else: # if the link is external, we skip it
                         #print("domain: " + domain)
                         #print("external: " + url)
                         continue
         return(links)
-
-
-    def getGithubs(self):
-        Githubs = {}
-        for url in self.URLsDict.keys():
-            foundGithubs = []
-
-            #### getHTML!!!!
-
-
-            if getHTML(url) != None : 
-
-                bsObj = BeautifulSoup(getHTML(url).content, 'html5lib')
-                links = [li.attrs ["href"] for li in bsObj.findAll("a") if 'href' in li.attrs]
-                for link in links:
-                    if self.isValidLink(link)== True and 'github' in link and link != url:
-                        foundGithubs.append(link)
-            Githubs[url] = foundGithubs
-        print(Githubs)
-        return(Githubs)
 
 
     def isValidLink(self, url):
@@ -361,3 +328,24 @@ class InternalTextsScraper(object):
                             print(link.attrs["href"])
                         elif 'journal' in link.attrs["href"]:
                             print(link.attrs["href"])
+
+    def getGithubs(self):
+        Githubs = {}
+        for url in self.URLsDict.keys():
+            foundGithubs = []
+            #### getHTML!!!!
+            if getHTML(url) != None : 
+
+                bsObj = BeautifulSoup(getHTML(url).content, 'html5lib')
+                links = [li.attrs ["href"] for li in bsObj.findAll("a") if 'href' in li.attrs]
+
+                for link in links:
+
+                    if self.isValidLink(link)== True and 'github' in link and link != url:
+
+                        foundGithubs.append(link)
+
+            Githubs[url] = foundGithubs
+
+        print(Githubs)
+        return(Githubs)
