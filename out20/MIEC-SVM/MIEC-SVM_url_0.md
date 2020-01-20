@@ -1,7 +1,0 @@
-<-- http://wanglab.ucsd.edu/MIEC-SVM/-->
-
-# MIEC-SVM (Molecular Interaction Energy Component & Support Vector Machine)
-MIEC-SVM method aims to characterize the energetic patterns of proteins binding to their partners. Based on computational modeling of the complex structures, molecular interaction energy components (MIECs) such as van der Waals and electrostatic interaction energies between protein and peptide residues at the interaction interface are computed using biophysical models. Using the available binding specificity data, a classification model using support vector machine (SVM) is then trained to predict binding and non- binding events. The MIEC-SVM method integrates energetic characteristics (MIEC) and a machine learning method (SVM) to reduce the error and noise in pure binding free energy calculations or bioinformatics methods based on sequence alone. Our previous studies have demonstrated that the MIEC-SVM method shows superior performance in predicting specificities of modular domains binding to peptides, scoring docking poses and identifying drug resistant mutants.
-The codes of MIEC-SVM can be downloaded here: MIEC-SVM pipeline v1.1
-The manual and tutorial is available here: MIEC-SVM_pipeline_v1.1_manual
-Please contact Wei Wang (wei-wang at ucsd.edu) for any question on MIEC-SVM pipeline.  

@@ -1,2 +1,0 @@
-http://www.popgen.dk/angsd	ANGSD
-http://cole-trapnell-lab.github.io/cufflinks/	cufflinks
